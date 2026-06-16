@@ -9,6 +9,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { FABULY } from '@/data/fabuly';
+import { DTP_FABULY } from '@/data/dtpFabuly';
 
 const EMBLEM = 'https://cdn.poehali.dev/projects/19b1c35a-795f-4144-983c-abd02e30beed/files/c160b5f5-0003-4b68-81b1-cd326727007c.jpg';
 
@@ -105,6 +106,22 @@ const Index = () => {
   const ukCount = FABULY.filter((f) => f.category === 'uk').length;
   const otherCount = FABULY.filter((f) => f.category === 'other').length;
 
+  const [dtpQuery, setDtpQuery] = useState('');
+  const filteredDtp = DTP_FABULY.filter((d) => {
+    const q = dtpQuery.trim().toLowerCase();
+    return (
+      !q ||
+      d.name.toLowerCase().includes(q) ||
+      d.article.toLowerCase().includes(q) ||
+      d.point.toLowerCase().includes(q) ||
+      d.fabula.toLowerCase().includes(q)
+    );
+  });
+
+  const copyFabula = (text: string) => {
+    navigator.clipboard?.writeText(text);
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground gos-pattern">
       {/* Top utility bar */}
@@ -186,7 +203,7 @@ const Index = () => {
             <div className="mt-12 grid grid-cols-3 gap-6 max-w-lg">
               {[
                 { n: `${FABULY.length}`, l: 'фабул КоАП и УК' },
-                { n: '4', l: 'вида ДТП' },
+                { n: `${DTP_FABULY.length}`, l: 'фабул ДТП' },
                 { n: '6', l: 'сервисов' },
               ].map((s) => (
                 <div key={s.l}>
@@ -272,14 +289,14 @@ const Index = () => {
       <section id="dtp" className="bg-secondary/50 border-y border-border">
         <div className="container mx-auto px-4 py-16">
           <SectionTitle icon="CarFront" kicker="Раздел 02" title="Справочник ДТП" />
-          <div className="grid md:grid-cols-2 gap-5">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
             {DTP.map((d, i) => (
-              <div key={i} className="bg-white border border-border rounded-sm p-6 hover:shadow-md transition-shadow">
+              <div key={i} className="bg-white border border-border rounded-sm p-5 hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-3 mb-3">
                   <span className="flex items-center justify-center h-9 w-9 rounded-sm bg-gos-blue text-primary-foreground font-display">
                     {String(i + 1).padStart(2, '0')}
                   </span>
-                  <h3 className="font-display text-lg text-gos-blue uppercase">{d.type}</h3>
+                  <h3 className="font-display text-base text-gos-blue uppercase leading-tight">{d.type}</h3>
                 </div>
                 <p className="text-sm text-foreground/80 mb-3">{d.desc}</p>
                 <div className="text-sm border-t border-border pt-3">
@@ -288,6 +305,73 @@ const Index = () => {
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Готовые фабулы ДТП */}
+          <div className="mt-14">
+            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-6">
+              <div>
+                <div className="flex items-center gap-2 text-gos-gold mb-1">
+                  <Icon name="FileText" size={16} />
+                  <span className="font-display tracking-[0.25em] uppercase text-xs">Готовые фабулы ДТП</span>
+                </div>
+                <h3 className="font-display text-2xl text-gos-blue uppercase tracking-wide">
+                  Шаблоны фабул · {DTP_FABULY.length}
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Знаки «+++++» — поля для заполнения данных участников и ТС.
+                </p>
+              </div>
+              <div className="relative lg:w-80">
+                <Icon name="Search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={dtpQuery}
+                  onChange={(e) => setDtpQuery(e.target.value)}
+                  placeholder="Поиск по пункту ПДД или ситуации"
+                  className="pl-9 rounded-sm border-border h-11 bg-white"
+                />
+              </div>
+            </div>
+
+            <Accordion type="single" collapsible className="space-y-3">
+              {filteredDtp.map((d, i) => (
+                <AccordionItem key={i} value={`dtp-${i}`} className="border border-border rounded-sm bg-white overflow-hidden">
+                  <AccordionTrigger className="px-5 py-4 hover:no-underline hover:bg-secondary/60 [&[data-state=open]]:bg-secondary">
+                    <div className="flex flex-wrap items-center gap-3 text-left">
+                      {d.point !== '—' && (
+                        <span className="shrink-0 font-display text-xs uppercase tracking-wider bg-gos-gold text-gos-blue px-2 py-1 rounded-sm">
+                          {d.point}
+                        </span>
+                      )}
+                      {d.article !== '—' && (
+                        <span className="shrink-0 font-display text-xs uppercase tracking-wider bg-gos-blue text-primary-foreground px-2 py-1 rounded-sm">
+                          {d.article}
+                        </span>
+                      )}
+                      <span className="font-display text-base text-gos-blue">{d.name}</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-5 pb-5">
+                    <p className="font-serif text-foreground/90 border-l-2 border-gos-gold pl-4 mb-4">{d.fabula}</p>
+                    <Button
+                      onClick={() => copyFabula(d.fabula)}
+                      variant="outline"
+                      size="sm"
+                      className="rounded-sm border-gos-blue text-gos-blue hover:bg-gos-blue hover:text-primary-foreground font-display uppercase tracking-wider text-xs"
+                    >
+                      <Icon name="Copy" size={14} className="mr-2" /> Скопировать фабулу
+                    </Button>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+
+            {filteredDtp.length === 0 && (
+              <div className="text-center py-12 text-muted-foreground">
+                <Icon name="SearchX" size={32} className="mx-auto mb-3 opacity-50" />
+                По запросу «{dtpQuery}» ничего не найдено.
+              </div>
+            )}
           </div>
         </div>
       </section>
