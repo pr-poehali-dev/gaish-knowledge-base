@@ -8,6 +8,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { FABULY } from '@/data/fabuly';
 
 const EMBLEM = 'https://cdn.poehali.dev/projects/19b1c35a-795f-4144-983c-abd02e30beed/files/c160b5f5-0003-4b68-81b1-cd326727007c.jpg';
 
@@ -18,37 +19,6 @@ const NAV = [
   { id: 'services', label: 'Сервисы проверок', icon: 'ShieldCheck' },
   { id: 'docs', label: 'Нормативные документы', icon: 'BookMarked' },
   { id: 'search', label: 'Расширенный поиск', icon: 'Search' },
-];
-
-const KOAP = [
-  {
-    article: 'ст. 12.8 ч.1 КоАП РФ',
-    title: 'Управление ТС в состоянии опьянения',
-    penalty: 'Штраф 45 000 ₽ + лишение прав на 1,5–2 года',
-    fabula:
-      '«… управлял транспортным средством марки ____, государственный регистрационный знак ____, находясь в состоянии алкогольного опьянения, чем нарушил п. 2.7 ПДД РФ, при этом его действия не содержат уголовно наказуемого деяния.»',
-  },
-  {
-    article: 'ст. 12.9 ч.2 КоАП РФ',
-    title: 'Превышение скорости на 20–40 км/ч',
-    penalty: 'Штраф 500 ₽',
-    fabula:
-      '«… управляя транспортным средством, превысил установленную скорость движения на величину более 20, но не более 40 км/ч, двигаясь со скоростью ____ км/ч при разрешённой ____ км/ч.»',
-  },
-  {
-    article: 'ст. 12.15 ч.4 КоАП РФ',
-    title: 'Выезд на полосу встречного движения',
-    penalty: 'Штраф 5 000 ₽ или лишение прав на 4–6 мес.',
-    fabula:
-      '«… в нарушение требований дорожной разметки 1.1 (1.3) и п. 9.1(1) ПДД РФ выехал на полосу, предназначенную для встречного движения, при совершении обгона (объезда).»',
-  },
-  {
-    article: 'ст. 12.6 КоАП РФ',
-    title: 'Непристёгнутый ремень безопасности',
-    penalty: 'Штраф 1 000 ₽',
-    fabula:
-      '«… управлял транспортным средством, не будучи пристёгнутым ремнём безопасности, чем нарушил требования п. 2.1.2 ПДД РФ.»',
-  },
 ];
 
 const DTP = [
@@ -112,11 +82,27 @@ function SectionTitle({ icon, kicker, title }: { icon: string; kicker: string; t
 const Index = () => {
   const [active, setActive] = useState('home');
   const [query, setQuery] = useState('');
+  const [koapQuery, setKoapQuery] = useState('');
+  const [koapFilter, setKoapFilter] = useState<'all' | 'koap' | 'uk'>('all');
 
   const go = (id: string) => {
     setActive(id);
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
+
+  const filteredFabuly = FABULY.filter((f) => {
+    const byCat = koapFilter === 'all' || f.category === koapFilter;
+    const q = koapQuery.trim().toLowerCase();
+    const byQuery =
+      !q ||
+      f.article.toLowerCase().includes(q) ||
+      f.title.toLowerCase().includes(q) ||
+      f.fabula.toLowerCase().includes(q);
+    return byCat && byQuery;
+  });
+
+  const koapCount = FABULY.filter((f) => f.category === 'koap').length;
+  const ukCount = FABULY.filter((f) => f.category === 'uk').length;
 
   return (
     <div className="min-h-screen bg-background text-foreground gos-pattern">
@@ -198,8 +184,8 @@ const Index = () => {
             </div>
             <div className="mt-12 grid grid-cols-3 gap-6 max-w-lg">
               {[
-                { n: '320+', l: 'статей КоАП' },
-                { n: '12', l: 'видов ДТП' },
+                { n: `${FABULY.length}`, l: 'фабул КоАП и УК' },
+                { n: '4', l: 'вида ДТП' },
                 { n: '6', l: 'сервисов' },
               ].map((s) => (
                 <div key={s.l}>
@@ -214,13 +200,46 @@ const Index = () => {
 
       {/* KoAP */}
       <section id="koap" className="container mx-auto px-4 py-16">
-        <SectionTitle icon="Scale" kicker="Раздел 01" title="Фабулы нарушений КоАП РФ" />
+        <SectionTitle icon="Scale" kicker="Раздел 01" title="Фабулы нарушений КоАП и УК РФ" />
+
+        {/* Filters */}
+        <div className="mb-6 flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
+          <div className="flex flex-wrap gap-2">
+            {[
+              { id: 'all', label: `Все · ${FABULY.length}` },
+              { id: 'koap', label: `Глава 12 КоАП · ${koapCount}` },
+              { id: 'uk', label: `Ст. 264 УК РФ · ${ukCount}` },
+            ].map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setKoapFilter(f.id as 'all' | 'koap' | 'uk')}
+                className={`font-display uppercase tracking-wider text-xs px-4 py-2 rounded-sm border transition-colors ${
+                  koapFilter === f.id
+                    ? 'bg-gos-blue text-primary-foreground border-gos-blue'
+                    : 'bg-white text-foreground/70 border-border hover:border-gos-blue hover:text-gos-blue'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+          <div className="relative lg:w-80">
+            <Icon name="Search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={koapQuery}
+              onChange={(e) => setKoapQuery(e.target.value)}
+              placeholder="Поиск по статье или нарушению"
+              className="pl-9 rounded-sm border-border h-11"
+            />
+          </div>
+        </div>
+
         <Accordion type="single" collapsible className="space-y-3">
-          {KOAP.map((item, i) => (
-            <AccordionItem key={i} value={`koap-${i}`} className="border border-border rounded-sm bg-white overflow-hidden">
+          {filteredFabuly.map((item, i) => (
+            <AccordionItem key={i} value={`fab-${i}`} className="border border-border rounded-sm bg-white overflow-hidden">
               <AccordionTrigger className="px-5 py-4 hover:no-underline hover:bg-secondary/60 [&[data-state=open]]:bg-secondary">
                 <div className="flex items-start gap-4 text-left">
-                  <span className="mt-0.5 shrink-0 font-display text-xs uppercase tracking-wider bg-gos-blue text-primary-foreground px-2 py-1 rounded-sm">
+                  <span className={`mt-0.5 shrink-0 font-display text-xs uppercase tracking-wider px-2 py-1 rounded-sm text-primary-foreground ${item.category === 'uk' ? 'bg-gos-red' : 'bg-gos-blue'}`}>
                     {item.article}
                   </span>
                   <span className="font-display text-base text-gos-blue">{item.title}</span>
@@ -229,13 +248,20 @@ const Index = () => {
               <AccordionContent className="px-5 pb-5">
                 <p className="font-serif italic text-foreground/90 border-l-2 border-gos-gold pl-4 mb-3">{item.fabula}</p>
                 <div className="flex items-center gap-2 text-gos-red text-sm font-medium">
-                  <Icon name="AlertTriangle" size={16} />
+                  <Icon name={item.category === 'uk' ? 'Gavel' : 'AlertTriangle'} size={16} />
                   {item.penalty}
                 </div>
               </AccordionContent>
             </AccordionItem>
           ))}
         </Accordion>
+
+        {filteredFabuly.length === 0 && (
+          <div className="text-center py-12 text-muted-foreground">
+            <Icon name="SearchX" size={32} className="mx-auto mb-3 opacity-50" />
+            По запросу «{koapQuery}» ничего не найдено.
+          </div>
+        )}
       </section>
 
       {/* DTP */}
