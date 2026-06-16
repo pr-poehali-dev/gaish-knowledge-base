@@ -83,7 +83,7 @@ const Index = () => {
   const [active, setActive] = useState('home');
   const [query, setQuery] = useState('');
   const [koapQuery, setKoapQuery] = useState('');
-  const [koapFilter, setKoapFilter] = useState<'all' | 'koap' | 'uk'>('all');
+  const [koapFilter, setKoapFilter] = useState<'all' | 'koap' | 'uk' | 'other'>('all');
 
   const go = (id: string) => {
     setActive(id);
@@ -103,6 +103,7 @@ const Index = () => {
 
   const koapCount = FABULY.filter((f) => f.category === 'koap').length;
   const ukCount = FABULY.filter((f) => f.category === 'uk').length;
+  const otherCount = FABULY.filter((f) => f.category === 'other').length;
 
   return (
     <div className="min-h-screen bg-background text-foreground gos-pattern">
@@ -209,10 +210,11 @@ const Index = () => {
               { id: 'all', label: `Все · ${FABULY.length}` },
               { id: 'koap', label: `Глава 12 КоАП · ${koapCount}` },
               { id: 'uk', label: `Ст. 264 УК РФ · ${ukCount}` },
+              { id: 'other', label: `Иные статьи · ${otherCount}` },
             ].map((f) => (
               <button
                 key={f.id}
-                onClick={() => setKoapFilter(f.id as 'all' | 'koap' | 'uk')}
+                onClick={() => setKoapFilter(f.id as 'all' | 'koap' | 'uk' | 'other')}
                 className={`font-display uppercase tracking-wider text-xs px-4 py-2 rounded-sm border transition-colors ${
                   koapFilter === f.id
                     ? 'bg-gos-blue text-primary-foreground border-gos-blue'
@@ -239,7 +241,9 @@ const Index = () => {
             <AccordionItem key={i} value={`fab-${i}`} className="border border-border rounded-sm bg-white overflow-hidden">
               <AccordionTrigger className="px-5 py-4 hover:no-underline hover:bg-secondary/60 [&[data-state=open]]:bg-secondary">
                 <div className="flex items-start gap-4 text-left">
-                  <span className={`mt-0.5 shrink-0 font-display text-xs uppercase tracking-wider px-2 py-1 rounded-sm text-primary-foreground ${item.category === 'uk' ? 'bg-gos-red' : 'bg-gos-blue'}`}>
+                  <span className={`mt-0.5 shrink-0 font-display text-xs uppercase tracking-wider px-2 py-1 rounded-sm text-primary-foreground ${
+                    item.category === 'uk' ? 'bg-gos-red' : item.category === 'other' ? 'bg-gos-gold text-gos-blue' : 'bg-gos-blue'
+                  }`}>
                     {item.article}
                   </span>
                   <span className="font-display text-base text-gos-blue">{item.title}</span>
@@ -248,7 +252,7 @@ const Index = () => {
               <AccordionContent className="px-5 pb-5">
                 <p className="font-serif italic text-foreground/90 border-l-2 border-gos-gold pl-4 mb-3">{item.fabula}</p>
                 <div className="flex items-center gap-2 text-gos-red text-sm font-medium">
-                  <Icon name={item.category === 'uk' ? 'Gavel' : 'AlertTriangle'} size={16} />
+                  <Icon name={item.category === 'uk' ? 'Gavel' : item.category === 'other' ? 'FileWarning' : 'AlertTriangle'} size={16} />
                   {item.penalty}
                 </div>
               </AccordionContent>
